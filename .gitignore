@@ -43,9 +43,9 @@ vignettes/*.pdf
 # My folders
 CDMInstances/BIG/
 CDMInstances/Medium/
-PfizerScript/Data characterisation/g_output/
-PfizerScript/Data characterisation/g_intermediate/
-PfizerScript/Data characterisation/.Rhistory
+Data characterisation/PfizerScript/g_output/
+Data characterisation/PfizerScript/g_intermediate/
+Data characterisation/PfizerScript/.Rhistory
 
 
 
