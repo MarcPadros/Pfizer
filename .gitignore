@@ -37,3 +37,17 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+
+
+# My folders
+CDMInstances/BIG/
+CDMInstances/Medium/
+PfizerScript/g_output/
+PfizerScript/g_intermediate
+PfizerScript/.Rhistory
+
+
+
+
+

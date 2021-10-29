@@ -35,10 +35,10 @@ CountHistorical <- function(file, c.date, lookback, id){
   
   for(i in ((12 * lookback) + 1):max(as.numeric(ncol(file)))) TEMP[,i - (12 * lookback)] <- rowSums(file[, (i- (12 * lookback)):(i-1)])
   
-  TEMP <- as.data.table(TEMP, keep.rownames = T)
-  TEMP <- melt(TEMP, id.vars = "rn", measure.vars =  colnames(TEMP)[!colnames(TEMP) %in% "rn"], variable.name = "month", value.name = "SUM_year")
-  TEMP <- TEMP[SUM_year > 0,]
-  setnames(TEMP, "rn", eval(id))
+  #TEMP <- as.data.table(TEMP, keep.rownames = T)
+  #TEMP <- melt(TEMP, id.vars = "rn", measure.vars =  colnames(TEMP)[!colnames(TEMP) %in% "rn"], variable.name = "month", value.name = "SUM_year")
+  #TEMP <- TEMP[SUM_year > 0,]
+  #setnames(TEMP, "rn", eval(id))
   
   return(TEMP)
   
@@ -51,32 +51,53 @@ CountHistorical <- function(file, c.date, lookback, id){
 TEMP <- CountHistorical(
   file = INF,
   c.date = "Date",
-  lookback = 10,
+  lookback = 5,
   id = "person_id"
 )
 
 rm(INF)
 gc()
 
-TEMP2 <- readRDS(paste0(populations_dir,"M_Studycohort.rds"))[,.(person_id, FIRST_COV_INF)][!is.na(FIRST_COV_INF),]
-TEMP2 <- as.data.table(expand.grid(TEMP2[["person_id"]],unique(TEMP[["month"]])))
-colnames(TEMP2) <- c("person_id","month")
+###########
+#i = "03-2021"
+TEMP_COV <- readRDS(paste0(populations_dir,"M_Studycohort.rds"))[,.(person_id, FIRST_COV_INF)][!is.na(FIRST_COV_INF),]
+for(i in colnames(TEMP)){
+  
+  TEMP2 <- as.data.table(TEMP[,i], keep.rownames = T)
+  colnames(TEMP2) <- c("person_id","SUM_year")
+  
+  TEMP3 <- merge(TEMP2, TEMP_COV, by = c("person_id"), all = T, allow.cartesian = F)
+  TEMP3[, ref_dat := as.Date(paste0("01-",i), "%d-%m-%y") ]
+  TEMP3 <- TEMP3[FIRST_COV_INF < ref_dat, FIRST_COV_INF2 := T ][,FIRST_COV_INF := NULL]
+  TEMP3 <- TEMP3[!is.na(SUM_year), SUM_year2 := T ][,SUM_year := NULL][,ref_dat := NULL]
+  setnames(TEMP3,c("SUM_year2","FIRST_COV_INF2") , c("SUM_year","FIRST_COV_INF"))
+  saveRDS(TEMP3,paste0(populations_dir,"Matching/",i,".rds"))
+  rm(TEMP2,TEMP3)
+  gc()
+}
+###########  
+  
 
-TEMP3 <- merge(TEMP,TEMP2[,FIRST_COV_INF := T],by = c("person_id","month"), all = T)
+#TEMP2 <- readRDS(paste0(populations_dir,"M_Studycohort.rds"))[,.(person_id, FIRST_COV_INF)][!is.na(FIRST_COV_INF),]
+#TEMP2 <- as.data.table(expand.grid(TEMP2[["person_id"]],unique(TEMP[["month"]])))
+#colnames(TEMP2) <- c("person_id","month")
 
-x <- colnames(TEMP3)[!colnames(TEMP3) %in% c("person_id","month","FIRST_COV_INF")]
+#TEMP3 <- merge(TEMP,TEMP2[,FIRST_COV_INF := T],by = c("person_id","month"), all = T)
 
-lapply(x, function(x) {
-  TEMP3 <- TEMP3[!is.na(get(x)), paste0(x,"2") := T]
-  TEMP3 <- TEMP3[, eval(x) := NULL]
-  setnames(TEMP3, paste0(x,"2"), eval(x))
-
-  } 
-      
-)
-
-saveRDS(TEMP3,paste0(populations_dir,"HIST.rds"))
-
-rm(TEMP,TEMP2,TEMP3,x)
+# x <- colnames(TEMP3)[!colnames(TEMP3) %in% c("person_id","month","FIRST_COV_INF")]
+# 
+# lapply(x, function(x) {
+#   TEMP3 <- TEMP3[!is.na(get(x)), paste0(x,"2") := T]
+#   TEMP3 <- TEMP3[, eval(x) := NULL]
+#   setnames(TEMP3, paste0(x,"2"), eval(x))
+# 
+#   } 
+#       
+# )
+# 
+# saveRDS(TEMP3,paste0(populations_dir,"HIST.rds"))
+# 
+# rm(TEMP,TEMP2,TEMP3,x)
+rm(TEMP,TEMP_COV)
 gc()
 
