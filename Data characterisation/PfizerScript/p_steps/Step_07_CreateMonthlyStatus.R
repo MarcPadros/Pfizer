@@ -67,7 +67,7 @@ for(i in colnames(TEMP)){
   colnames(TEMP2) <- c("person_id","SUM_year")
   
   TEMP3 <- merge(TEMP2, TEMP_COV, by = c("person_id"), all = T, allow.cartesian = F)
-  TEMP3[, ref_dat := as.Date(paste0("01-",i), "%d-%m-%y") ]
+  TEMP3 <- TEMP3[, ref_dat := as.Date(paste0("01-",i), "%d-%m-%Y") ]
   TEMP3 <- TEMP3[FIRST_COV_INF < ref_dat, FIRST_COV_INF2 := T ][,FIRST_COV_INF := NULL]
   TEMP3 <- TEMP3[!is.na(SUM_year), SUM_year2 := T ][,SUM_year := NULL][,ref_dat := NULL]
   setnames(TEMP3,c("SUM_year2","FIRST_COV_INF2") , c("SUM_year","FIRST_COV_INF"))

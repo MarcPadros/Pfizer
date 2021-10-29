@@ -1,7 +1,7 @@
 rm(list = ls(all=TRUE))
 
 Folder <- "Medium"
-Nrows <- 100
+Nrows <- 10000
 
 if (!require("rstudioapi")) install.packages("rstudioapi")
 if (!require("data.table")) install.packages("data.table")

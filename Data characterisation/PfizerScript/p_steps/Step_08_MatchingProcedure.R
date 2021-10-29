@@ -24,7 +24,7 @@ setorder(comb,FIRST_PFIZER,YEAR_BIRTH)
 #comb <-comb[, YEAR_BIRTH := as.numeric(YEAR_BIRTH)]
 #comb <-comb[, FIRST_PFIZER := as.Date(FIRST_PFIZER)]
 
-#i = 1
+#i = 4
 
 m = 0
 nb_exposed <- nrow(FILE_EXPOSED)
@@ -75,7 +75,7 @@ if(nrow(Exposed) == 0){
         scheme <- as.data.table(expand.grid(c(T,F),c(T,F)))
         
         
-        #k = 3
+        #k = 1
         for(k in 1:nrow(scheme)){
         
                   Exposed1 <- Exposed[SUM_year == scheme[["Var1"]][k] & FIRST_COV_INF == scheme[["Var2"]][k],]
