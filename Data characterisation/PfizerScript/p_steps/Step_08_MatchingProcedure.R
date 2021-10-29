@@ -24,7 +24,7 @@ setorder(comb,FIRST_PFIZER,YEAR_BIRTH)
 #comb <-comb[, YEAR_BIRTH := as.numeric(YEAR_BIRTH)]
 #comb <-comb[, FIRST_PFIZER := as.Date(FIRST_PFIZER)]
 
-#i = 2
+#i = 1
 
 m = 0
 nb_exposed <- nrow(FILE_EXPOSED)
@@ -75,7 +75,7 @@ if(nrow(Exposed) == 0){
         scheme <- as.data.table(expand.grid(c(T,F),c(T,F)))
         
         
-        k = 4
+        #k = 3
         for(k in 1:nrow(scheme)){
         
                   Exposed1 <- Exposed[SUM_year == scheme[["Var1"]][k] & FIRST_COV_INF == scheme[["Var2"]][k],]
@@ -87,17 +87,19 @@ if(nrow(Exposed) == 0){
                     rows <- ceiling(nrow(Exposed1)/nb_cores)
                     clust <- makeCluster(nb_cores, setup_timeout = 5000)
                     x <- c(1:nb_cores)
+                    nb_cores2 <- nb_cores
                   }else{
                     rows <- nrow(Exposed)
                     clust <- makeCluster(1, setup_timeout = 5000)
                     x <- 1
+                    nb_cores2 <- 1
                   }
                   
-                  clusterExport(clust, varlist =  c("Exposed1","Controls1","nb_cores","rows"))
+                  clusterExport(clust, varlist =  c("Exposed1","Controls1","nb_cores2","rows"))
                 
                   
                   
-                  #y <- 3
+                  #y <- 1
                   
                   
                   
@@ -105,7 +107,7 @@ if(nrow(Exposed) == 0){
                     
                     library("data.table")
                     
-                    if(y < nb_cores){
+                    if(y < nb_cores2){
                       
                       Exposed1 <- Exposed1[(1 + ((y-1) * rows)) :(rows * y),]
                     
@@ -185,7 +187,7 @@ saveRDS(MATCHED,paste0(populations_dir,"MATCH_PAIRS.rds"))
 
 #rm(FILE_CONTROL, FILE_EXPOSED, comb, MATCHED,HIST)
 
-rm(clust,comb,FILE_EXPOSED,FILE_CONTROL,MATCHED,scheme)
+rm(clust,comb,FILE_EXPOSED,FILE_CONTROL,MATCHED,scheme, nb_cores2)
 
 
 
