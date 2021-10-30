@@ -30,7 +30,7 @@ m = 0
 nb_exposed <- nrow(FILE_EXPOSED)
 MATCHED <- data.table()
 
-system.time(for(i in 1:nrow(comb)){
+system.time(for(i in 1:nrow(comb[1:10,])){
 
 # if(comb[["delete"]]){
 #   FILE_EXPOSED <- FILE_EXPOSED[FIRST_PFIZER >= comb[["FIRST_PFIZER"]][i],]
