@@ -64,7 +64,7 @@ if(nrow(Exposed) == 0){
                   if(nrow(Exposed1) > 0){
                   Controls1 <- Controls[SUM_year == scheme[["Var1"]][k] & FIRST_COV_INF == scheme[["Var2"]][k],]
                     
-                  v.exp <- Exposed[["Exposed"]]
+                  v.exp <- Exposed1[["Exposed"]]
                   v.control <- sample(Controls1[["Control"]], length(v.exp), replace = T)
                   MATCHED_TEMP <- as.data.table(cbind(v.exp,v.control))
                   

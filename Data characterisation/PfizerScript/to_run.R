@@ -11,8 +11,8 @@ library(rstudioapi)
 projectFolder<-dirname(rstudioapi::getSourceEditorContext()$path)
 #setwd(projectFolder)
 #StudyName <- "BIG"
-StudyName <- "Pfizer"
-#StudyName <- "Medium"
+#StudyName <- "Pfizer"
+StudyName <- "Medium"
 
 ###################################################
 #Parameters
