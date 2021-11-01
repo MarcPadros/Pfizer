@@ -63,16 +63,19 @@ gc()
 TEMP_COV <- readRDS(paste0(populations_dir,"M_Studycohort.rds"))[,.(person_id, FIRST_COV_INF)][!is.na(FIRST_COV_INF),]
 for(i in colnames(TEMP)){
   
+  ref <- seq.Date(as.Date(paste0("01-",i), "%d-%m-%Y"), length.out = 2, by = "month")[2] - 1
+  
   TEMP2 <- as.data.table(TEMP[,i], keep.rownames = T)
   colnames(TEMP2) <- c("person_id","SUM_year")
   
   TEMP3 <- merge(TEMP2, TEMP_COV, by = c("person_id"), all = T, allow.cartesian = F)
-  TEMP3 <- TEMP3[, ref_dat := as.Date(paste0("01-",i), "%d-%m-%Y") ]
-  TEMP3 <- TEMP3[FIRST_COV_INF < ref_dat, FIRST_COV_INF2 := T ][,FIRST_COV_INF := NULL]
-  TEMP3 <- TEMP3[!is.na(SUM_year), SUM_year2 := T ][,SUM_year := NULL][,ref_dat := NULL]
-  setnames(TEMP3,c("SUM_year2","FIRST_COV_INF2") , c("SUM_year","FIRST_COV_INF"))
+  TEMP3 <- TEMP3[, ref_dat := ref ]
+  #TEMP3 <- TEMP3[FIRST_COV_INF <= ref_dat, FIRST_COV_INF2 := T ][,FIRST_COV_INF := NULL]
+  TEMP3 <- TEMP3[FIRST_COV_INF <= ref_dat, ][,ref_dat := NULL]
+  #TEMP3 <- TEMP3[!is.na(SUM_year), SUM_year2 := T ][,SUM_year := NULL][,ref_dat := NULL]
+  #setnames(TEMP3,c("SUM_year2","FIRST_COV_INF2") , c("SUM_year","FIRST_COV_INF"))
   saveRDS(TEMP3,paste0(populations_dir,"Matching/",i,".rds"))
-  rm(TEMP2,TEMP3)
+  rm(TEMP2,TEMP3,ref)
   gc()
 }
 ###########  
