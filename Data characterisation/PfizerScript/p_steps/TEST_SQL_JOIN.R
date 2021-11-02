@@ -16,9 +16,10 @@ clust <- makeCluster(n.cores/2, setup_timeout = 5000)
 clusterExport(clust, varlist =  c("M_Studycohort","VAC_INFLUENZA","Exposed","nb"))
 
 #x <- c(1:round(nrow(Exposed)/nb))
-x <- x[1:12,]
+#x <- x[1:12,]
 #x=1
 #y <- 2
+
 
 system.time(MATCHED_TEMP <- parLapply(cl = clust,x, function(y){
 
