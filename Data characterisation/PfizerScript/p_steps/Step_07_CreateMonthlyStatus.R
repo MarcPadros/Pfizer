@@ -4,12 +4,14 @@ print("Determine per month, within the study period, the status for matching cri
 INF <- readRDS(paste0(populations_dir,"INFLUENZA.rds"))
 
 
-#file <- INF
-#c.date <- "Date"
-#lookback <- 10
-#id <- "person_id"
+file <- INF
+c.date <- "Date"
+lookback <- 10
+id <- "person_id"
 
-CountHistorical <- function(file, c.date, lookback, id){
+lookback_function <- "min"
+
+CountHistorical <- function(file, c.date, lookback, id, lookback_function = "sum"){
 
   file <- file[, month := month(get(c.date))][, year := year(get(c.date))]
   file <- file[,label := paste0(sprintf("%02d",month),"-",year)]
@@ -21,19 +23,26 @@ CountHistorical <- function(file, c.date, lookback, id){
   comb <- comb[TIME2 > - (12 * lookback) - 1, ]
 
   file <- merge(x = comb[,.(label,TIME2)], y = file, by = "label", all.x = T)
-  file <- file[, .(NB = sum(!is.na(eval(Date)))), by = c(id, "label", "TIME2")]
+  if(lookback_function == "sum"){file <- file[, .(NB = sum(!is.na(eval(Date)))), by = c(id, "label", "TIME2")]}
+  if(lookback_function == "min"){file <- file[, .(NB = min(eval(Date))), by = c(id, "label", "TIME2")]}
   setorder(file,TIME2)
   setnames(file, eval(id), "id")
   
+  
+  
   file <- as.matrix(dcast(file, id  ~  TIME2, value.var = "NB")[!is.na(id),], rownames = "id")
   
-  file[is.na(file)] <- 0
+  if(lookback_function == "sum") file[is.na(file)] <- 0
 
   TEMP <- matrix(NA,nrow = nrow(file), ncol = ncol(file) - (12 * lookback))
   colnames(TEMP) <- comb[TIME2 >= 0,label]
   rownames(TEMP) <- row.names(file)
   
-  for(i in ((12 * lookback) + 1):max(as.numeric(ncol(file)))) TEMP[,i - (12 * lookback)] <- rowSums(file[, (i- (12 * lookback)):(i-1)])
+  if(lookback_function == "sum") for(i in ((12 * lookback) + 1):max(as.numeric(ncol(file)))) TEMP[,i - (12 * lookback)] <- rowSums(file[, (i- (12 * lookback)):(i-1)])
+  if(lookback_function == "min") for(i in ((12 * lookback) + 1):max(as.numeric(ncol(file)))) TEMP[,i - (12 * lookback)] <- min(file[, (i- (12 * lookback)):(i-1)], na.rm = T)
+  
+  
+  
   
   #TEMP <- as.data.table(TEMP, keep.rownames = T)
   #TEMP <- melt(TEMP, id.vars = "rn", measure.vars =  colnames(TEMP)[!colnames(TEMP) %in% "rn"], variable.name = "month", value.name = "SUM_year")
