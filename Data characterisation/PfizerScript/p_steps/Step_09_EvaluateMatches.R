@@ -36,7 +36,7 @@ check5 <- check5[(x.x == T & x.y == T) | (is.na(x.x & is.na(x.y))), x := "correc
 
 for(i in c("check1", "check2", "check3", "check4", "check5")){
   temp <- get(i)
-  print(sum(temp[["x"]] == "correct") == nrow(temp) & length(temp[["x"]] == "correct") == nrow(TEST))
+  print(sum(temp[["x"]] == "correct") == nrow(temp[!is.na(x),]) & length(temp[["x"]] == "correct") == nrow(TEST))
   rm(temp)
 }
 

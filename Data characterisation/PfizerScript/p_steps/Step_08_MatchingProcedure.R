@@ -5,8 +5,8 @@ nb_cores <- ceiling(n.cores/2)
 M_Studycohort <- readRDS(paste0(populations_dir,"M_Studycohort.rds"))
 #HIST <- readRDS(paste0(populations_dir,"HIST.rds"))
 
-FILE_EXPOSED <- copy(M_Studycohort)[!is.na(FIRST_PFIZER),][,.(person_id, sex_at_instance_creation, FIRST_PFIZER, FIRST_OTHER, YEAR_BIRTH, month_t0)]
-FILE_CONTROL <- copy(M_Studycohort)[,.(person_id,sex_at_instance_creation,FIRST_PFIZER,FIRST_OTHER,YEAR_BIRTH)]
+FILE_EXPOSED <- copy(M_Studycohort)[!is.na(FIRST_PFIZER),][,.(person_id, sex_at_instance_creation, FIRST_PFIZER, FIRST_OTHER, YEAR_BIRTH, FIRST_COV_INF, month_t0)]
+FILE_CONTROL <- copy(M_Studycohort)[,.(person_id,sex_at_instance_creation,FIRST_PFIZER,FIRST_OTHER,YEAR_BIRTH, FIRST_COV_INF)]
 
 rm(M_Studycohort)
 gc()
@@ -41,7 +41,7 @@ system.time(for(i in 1:nrow(comb[1:6,])){
 Exposed <- FILE_EXPOSED[
                       sex_at_instance_creation == comb[["sex_at_instance_creation"]][i] & 
                       FIRST_PFIZER == comb[["FIRST_PFIZER"]][i] & 
-                      YEAR_BIRTH == comb[["YEAR_BIRTH"]][i],.(person_id)][, id := i][,t0 := comb[["FIRST_PFIZER"]][i]] 
+                      YEAR_BIRTH == comb[["YEAR_BIRTH"]][i],.(person_id, month_t0,FIRST_COV_INF)][, id := i][,t0 := comb[["FIRST_PFIZER"]][i]] 
 
 setnames(Exposed, "person_id", "Exposed")
 
@@ -55,24 +55,33 @@ if(nrow(Exposed) == 0){
                         (VAC_DATE1 > comb[["FIRST_PFIZER"]][i] | is.na(VAC_DATE1)) &
                       #(FIRST_PFIZER > comb[["FIRST_PFIZER"]][i] | FIRST_OTHER > comb[["FIRST_PFIZER"]][i] | (is.na(FIRST_PFIZER) & is.na(FIRST_OTHER))) & 
                         YEAR_BIRTH %between% list(comb[["YEAR_BIRTH"]][i] - 1,  comb[["YEAR_BIRTH"]][i] + 1)
-                      ,.(person_id)][, id := i][,t0 := comb[["FIRST_PFIZER"]][i]]
+                      ,.(person_id, FIRST_COV_INF)][, id := i][,t0 := comb[["FIRST_PFIZER"]][i]]
         
         setnames(Controls, "person_id", "Control")
         
-        Exposed[,t0_month := paste0(sprintf("%02d",month(t0)),"-",year(t0))]
-        Controls[,t0_month := paste0(sprintf("%02d",month(t0)),"-",year(t0))]
+        #Exposed[,t0_month := paste0(sprintf("%02d",month(t0)),"-",year(t0))]
+        Controls[,month_t0 := paste0(sprintf("%02d",month(t0)),"-",year(t0))]
         
         ###
         HIST <-readRDS(paste0(populations_dir,"Matching/",paste0(sprintf("%02d",month(comb[i, FIRST_PFIZER])),"-",year(comb[i, FIRST_PFIZER])),".rds"))
-        Exposed <- merge(x = Exposed, y = HIST, by.x = c("Exposed"), by.y = c("person_id"), all.x = T, all.y = F, allow.cartesian = F)[is.na(SUM_year), SUM_year := F][is.na(FIRST_COV_INF), FIRST_COV_INF := F]
-        Controls <- merge(x = Controls, y = HIST, by.x = c("Control"), by.y = c("person_id"), all.x = T, all.y = F, allow.cartesian = F)[is.na(SUM_year), SUM_year := F][is.na(FIRST_COV_INF), FIRST_COV_INF := F]
+        Exposed <- merge(x = Exposed, y = HIST, by.x = c("Exposed"), by.y = c("person_id"), all.x = T, all.y = F, allow.cartesian = F)
+        
+        hist.cols <- c("INFP5","FIRST_COV_INF")
+        lapply(hist.cols, function(x) Exposed <- Exposed[, paste0(eval(x),"_2") := fifelse(get(x) < t0,T, F, na = F)][,eval(x) := NULL])
+        
+        Controls <- merge(x = Controls, y = HIST, by.x = c("Control"), by.y = c("person_id"), all.x = T, all.y = F, allow.cartesian = F)
+        lapply(hist.cols, function(x) Controls <- Controls[, paste0(eval(x),"_2") := fifelse(get(x) < t0, T, F, na = F)][,eval(x) := NULL])
+        
+        hist.cols2 <- paste0(hist.cols,"_2")
+        
         rm(HIST)
         gc()
         ###
         #Exposed <- merge(x = Exposed, y = HIST, by.x = c("Exposed","t0_month"), by.y = c("person_id","month"), all.x = T, all.y = F, allow.cartesian = F)[is.na(SUM_year), SUM_year := F][is.na(FIRST_COV_INF), FIRST_COV_INF := F]
         #Controls <- merge(x = Controls, y = HIST, by.x = c("Control","t0_month"), by.y = c("person_id","month"), all.x = T, all.y = F, allow.cartesian = F)[is.na(SUM_year), SUM_year := F][is.na(FIRST_COV_INF), FIRST_COV_INF := F]
         
-        scheme <- as.data.table(expand.grid(c(T,F),c(T,F)))
+        #scheme <- as.data.table(expand.grid(c(T,F),c(T,F)))
+        scheme <- unique(Exposed[,..hist.cols2])
         
         
         #k = 1

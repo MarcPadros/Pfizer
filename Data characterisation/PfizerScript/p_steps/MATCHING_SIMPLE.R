@@ -13,7 +13,7 @@ gc()
 FILE_CONTROL <- FILE_CONTROL[, VAC_DATE1 := fifelse(!is.na(FIRST_PFIZER),FIRST_PFIZER,FIRST_OTHER) ][, FIRST_PFIZER := NULL ][, FIRST_OTHER := NULL ]
 FILE_CONTROL <- FILE_CONTROL[,VAC_DATE1 := as.IDate(VAC_DATE1)]
 
-Exposed[["FIRST_COV_INF"]] < Exposed[["FIRST_PFIZER"]] 
+
 
 MATCHED <- matrix(NA, nrow = nrow(FILE_EXPOSED), ncol = 2)
 
@@ -62,7 +62,10 @@ MATCHED[i,2] <- sample(Controls, 1)else{
   
 }
 rm(Exposed,Controls)    
-print(i)
+#print(i)
 }
 )
-              
+   
+
+saveRDS(MATCHED,paste0(populations_dir,"MATCH_PAIRS_SIMPLE.rds"))
+           
