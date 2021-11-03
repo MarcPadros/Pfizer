@@ -11,8 +11,8 @@ library(rstudioapi)
 projectFolder<-dirname(rstudioapi::getSourceEditorContext()$path)
 #setwd(projectFolder)
 #StudyName <- "BIG"
-StudyName <- "Pfizer"
-#StudyName <- "Medium"
+#StudyName <- "Pfizer"
+StudyName <- "Medium"
 
 ###################################################
 #Parameters
@@ -59,7 +59,7 @@ system.time(source(paste0(pre_dir,"Step_07_CreateMonthlyStatus.R")))
 #system.time(source(paste0(pre_dir,"TEST_SQL_JOIN.R")))
 #system.time(source(paste0(pre_dir,"Step_08_MatchingProcedure.R")))
 system.time(source(paste0(pre_dir,"Step_08_MatchingProcedure - Copy.R")))
-system.time(source(paste0(pre_dir,"MATCHING_SIMPLE.R")))
+#system.time(source(paste0(pre_dir,"MATCHING_SIMPLE.R")))
 system.time(source(paste0(pre_dir,"Step_09_EvaluateMatches.R")))
 
 #system.time(source(paste0(pre_dir,"TEST_SQL_JOIN.R")))

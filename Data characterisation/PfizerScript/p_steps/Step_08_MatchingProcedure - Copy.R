@@ -34,7 +34,7 @@ clust <- makeCluster(nb_cores, setup_timeout = 5000, outfile=paste0(populations_
 clusterExport(clust, varlist =  c("FILE_CONTROL","FILE_EXPOSED","comb","MATCHED","populations_dir", "hist.cols", "hist.cols2"))
 
 
-i=108
+
 system.time(MATCHED_TEMP <- parLapply(cl = clust, x , function(i){
   
 library("data.table")

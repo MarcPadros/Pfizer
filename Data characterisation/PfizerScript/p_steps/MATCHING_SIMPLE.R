@@ -1,4 +1,6 @@
-
+library("parallel")
+n.cores <- detectCores()
+nb_cores <- ceiling(n.cores/2)
 
 M_Studycohort <- readRDS(paste0(populations_dir,"M_Studycohort.rds"))
 
@@ -15,57 +17,85 @@ FILE_CONTROL <- FILE_CONTROL[,VAC_DATE1 := as.IDate(VAC_DATE1)]
 
 
 
-MATCHED <- matrix(NA, nrow = nrow(FILE_EXPOSED), ncol = 2)
+#x = 1:nrow(comb[1:6,])
+x = 1:nrow(FILE_EXPOSED[1:834,])
 
-system.time(for(i in 1:nrow(FILE_EXPOSED)){
-Exposed <- FILE_EXPOSED[i,]
+clust <- makeCluster(nb_cores, setup_timeout = 5000, outfile=paste0(populations_dir,"log2.txt"))
+clusterExport(clust, varlist =  c("FILE_CONTROL","FILE_EXPOSED","MATCHED","populations_dir"))
+i =2
 
-COV <- Exposed[["FIRST_COV_INF"]] < Exposed[["FIRST_PFIZER"]] 
-
-if(is.na(COV)){
-Controls <- FILE_CONTROL[
-  sex_at_instance_creation == Exposed[["sex_at_instance_creation"]] & 
-    (VAC_DATE1 > Exposed[["FIRST_PFIZER"]] | is.na(VAC_DATE1)) &
-    YEAR_BIRTH %between% list(Exposed[["YEAR_BIRTH"]] - 1,  Exposed[["YEAR_BIRTH"]] + 1) &
-    is.na(FIRST_COV_INF)
-    
-  ,][["person_id"]]
-}
-
-if(!is.na(COV)){
-if(COV){
-  Controls <- FILE_CONTROL[
-    sex_at_instance_creation == Exposed[["sex_at_instance_creation"]] & 
-      (VAC_DATE1 > Exposed[["FIRST_PFIZER"]] | is.na(VAC_DATE1)) &
-      YEAR_BIRTH %between% list(Exposed[["YEAR_BIRTH"]] - 1,  Exposed[["YEAR_BIRTH"]] + 1) &
-      FIRST_COV_INF < Exposed[["FIRST_PFIZER"]]
-    
-    ,][["person_id"]]
-}
-
-if(!COV){
-  Controls <- FILE_CONTROL[
-    sex_at_instance_creation == Exposed[["sex_at_instance_creation"]] & 
-      (VAC_DATE1 > Exposed[["FIRST_PFIZER"]] | is.na(VAC_DATE1)) &
-      YEAR_BIRTH %between% list(Exposed[["YEAR_BIRTH"]] - 1,  Exposed[["YEAR_BIRTH"]] + 1) &
-      (FIRST_COV_INF >= Exposed[["FIRST_PFIZER"]] | is.na(FIRST_COV_INF))
-    
-    ,][["person_id"]]
-}
-}
+#x=2
+system.time(MATCHED_TEMP <- parLapply(cl = clust, x , function(i){
   
-MATCHED[i,1] <- Exposed[["person_id"]]
-
-if(length(Controls) > 0)
-MATCHED[i,2] <- sample(Controls, 1)else{
-  MATCHED[i,2] <- NA
-  
-}
-rm(Exposed,Controls)    
+            library("data.table")
+            
+            #system.time(for(i in 1:nrow(FILE_EXPOSED[1:834,])){
+            Exposed <- FILE_EXPOSED[i,]
+            
+            COV <- Exposed[["FIRST_COV_INF"]] < Exposed[["FIRST_PFIZER"]] 
+            
+            if(is.na(COV)){
+            Controls <- FILE_CONTROL[
+              sex_at_instance_creation == Exposed[["sex_at_instance_creation"]] & 
+                (VAC_DATE1 > Exposed[["FIRST_PFIZER"]] | is.na(VAC_DATE1)) &
+                YEAR_BIRTH %between% list(Exposed[["YEAR_BIRTH"]] - 1,  Exposed[["YEAR_BIRTH"]] + 1) &
+                is.na(FIRST_COV_INF)
+                
+              ,][["person_id"]]
+            }
+            
+            if(!is.na(COV)){
+            if(COV){
+              Controls <- FILE_CONTROL[
+                sex_at_instance_creation == Exposed[["sex_at_instance_creation"]] & 
+                  (VAC_DATE1 > Exposed[["FIRST_PFIZER"]] | is.na(VAC_DATE1)) &
+                  YEAR_BIRTH %between% list(Exposed[["YEAR_BIRTH"]] - 1,  Exposed[["YEAR_BIRTH"]] + 1) &
+                  FIRST_COV_INF < Exposed[["FIRST_PFIZER"]]
+                
+                ,][["person_id"]]
+            }  
+            
+            if(!COV){
+              Controls <- FILE_CONTROL[
+                sex_at_instance_creation == Exposed[["sex_at_instance_creation"]] & 
+                  (VAC_DATE1 > Exposed[["FIRST_PFIZER"]] | is.na(VAC_DATE1)) &
+                  YEAR_BIRTH %between% list(Exposed[["YEAR_BIRTH"]] - 1,  Exposed[["YEAR_BIRTH"]] + 1) &
+                  (FIRST_COV_INF >= Exposed[["FIRST_PFIZER"]] | is.na(FIRST_COV_INF))
+                
+                ,][["person_id"]]
+            }
+            
+            }
+               
+            MATCHED <- matrix(NA, nrow = 1, ncol = 2)
+            MATCHED[1,1] <- Exposed[["person_id"]]
+            
+            if(length(Controls) > 0){
+            MATCHED[1,2] <- sample(Controls, 1)}else{
+              MATCHED[1,2] <- NA
+              
+            }
+            return(MATCHED)
+            print(i)
+            rm(Exposed,Controls, MATCHED)    
 #print(i)
 }
 )
-   
+)   
+
+stopCluster(clust)
+
+MATCHED <- as.data.table(do.call(rbind, MATCHED_TEMP))
+
+MATCHED <- MATCHED[, id := row.names(MATCHED)]
+MATCHED <- merge(MATCHED, FILE_EXPOSED[,.(person_id, FIRST_PFIZER)], by.x = "V1", by.y = "person_id", all.x = T)
+setnames(MATCHED, c("FIRST_PFIZER","V1","V2"), c("T0", "Exposed","Control"))
+MATCHED[, T0 := as.Date(T0)]
 
 saveRDS(MATCHED,paste0(populations_dir,"MATCH_PAIRS_SIMPLE.rds"))
            
+
+
+
+
+
