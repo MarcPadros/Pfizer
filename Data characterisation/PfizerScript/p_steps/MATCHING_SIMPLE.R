@@ -16,15 +16,12 @@ FILE_CONTROL <- FILE_CONTROL[, VAC_DATE1 := fifelse(!is.na(FIRST_PFIZER),FIRST_P
 FILE_CONTROL <- FILE_CONTROL[,VAC_DATE1 := as.IDate(VAC_DATE1)]
 
 
-
 #x = 1:nrow(comb[1:6,])
-x = 1:nrow(FILE_EXPOSED[1:834,])
+x = 1:nrow(FILE_EXPOSED)
 
 clust <- makeCluster(nb_cores, setup_timeout = 5000, outfile=paste0(populations_dir,"log2.txt"))
 clusterExport(clust, varlist =  c("FILE_CONTROL","FILE_EXPOSED","MATCHED","populations_dir"))
-i =2
 
-#x=2
 system.time(MATCHED_TEMP <- parLapply(cl = clust, x , function(i){
   
             library("data.table")
