@@ -7,7 +7,7 @@ Exposed <- M_Studycohort[!is.na(FIRST_PFIZER),]
 
 VAC_INFLUENZA <- readRDS(paste0(vaccins_dir,"VAC_INFLUENZA.rds"))
 VAC_INFLUENZA <- VAC_INFLUENZA[, .(person_id ,Date)][,x := 1]
-
+#
 
 library("parallel")
 n.cores <- detectCores()
